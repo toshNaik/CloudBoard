@@ -5,3 +5,4 @@ cloudboard-389721-firebase-adminsdk-ehot2-27d77d54bb.json
 .env
 *.db
 CloudBoard
+certs
