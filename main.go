@@ -27,6 +27,7 @@ func main() {
 	r.POST("/refresh", middleware.RequireAuth, controllers.RefreshAccessToken)
 	r.POST("/cloudboard/put", middleware.RequireAuth, controllers.WriteCloudboard)
 	r.GET("/cloudboard/get", middleware.RequireAuth, controllers.ReadCloudboard)
+	r.GET("/cloudboard/ws/:user_id", controllers.WSCloudBoard)
 	
 	// testing routes
 	r.GET("/", func(c *gin.Context) {

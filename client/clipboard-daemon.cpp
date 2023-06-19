@@ -1,3 +1,4 @@
+#include "utils.h"
 #include <gtk/gtk.h>
 #include <iostream>
 #include <fstream>
@@ -10,18 +11,45 @@
 #include <unistd.h>
 #include <syslog.h>
 
+std::string cookie_file;
+
 void ClipboardTextChanged(GtkClipboard* clipboard, gpointer user_data)
 {
 	gchar* text = gtk_clipboard_wait_for_text(clipboard);
+	// send json object to server
+	std::string response = sendData(text, cookie_file);
+
 	std::ofstream tmpfile;
 	tmpfile.open("/tmp/cloudboard");
-	// g_print("Clipboard contents: %s\n", text);
-	tmpfile << text;
+	tmpfile << response;
 	g_free(text);
 }
 
+
 int main(int argc, char* argv[])
 {
+	// Login to server
+	std::cout << "Enter email: ";
+	std::string email;
+	std::cin >> email;
+	std::cout << "Enter password: ";
+	std::string password;
+	std::cin >> password;
+	cookie_file = "/tmp/cookies.txt";
+	// std::cin >> cookie_file;
+	// if(cookie_file == "") {
+	// 	cookie_file = "/tmp/cookies";
+	// }
+	
+	std::string response = login(email, password, cookie_file);
+	if (response[2] == 'e') {
+		std::cout << response << std::endl;
+		exit(0);
+	} else {
+		std::cout << "Logged in successfully" << std::endl;
+	}
+
+	// Daemonize
 	pid_t pid, sid;
 	pid = fork();
 	if (pid < 0) {
