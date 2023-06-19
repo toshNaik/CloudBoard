@@ -3,7 +3,6 @@ package utils
 import (
 	"encoding/base64"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -27,7 +26,7 @@ func GenerateToken(userID string, expireTimeDuration time.Duration, privateKey s
 	*td.ExpiresAt = time.Now().Add(expireTimeDuration).Unix()
 
 	// obtain the private key from the environment variable
-	decodedPrivateKey, err := base64.StdEncoding.DecodeString(os.Getenv(privateKey))
+	decodedPrivateKey, err := base64.StdEncoding.DecodeString(privateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +54,7 @@ func GenerateToken(userID string, expireTimeDuration time.Duration, privateKey s
 
 
 func VerifyToken(tokenString string, publicKey string) (*TokenDetails, error) {
-	decodedPublicKey, err := base64.StdEncoding.DecodeString(os.Getenv(publicKey))
+	decodedPublicKey, err := base64.StdEncoding.DecodeString(publicKey)
 	if err != nil {
 		return nil, fmt.Errorf("error while decoding public key: %v", err)
 	}

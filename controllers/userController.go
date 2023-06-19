@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/toshnaik/CloudBoard/models"
 	"github.com/toshnaik/CloudBoard/utils"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func SignUp(c *gin.Context) {
@@ -82,19 +84,30 @@ func Login(c *gin.Context) {
 	}
 
 	// create a refresh and access token
-	refreshTokenDetails, err := utils.GenerateToken(fmt.Sprint(user.ID), time.Hour*24*365, "REFRESH_TOKEN_PRIVATE_KEY")
+	refreshTokenDetails, err := utils.GenerateToken(fmt.Sprint(user.ID), time.Hour*24*365, os.Getenv("REFRESH_TOKEN_PRIVATE_KEY"))
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
 
-	accessTokenDetails, err := utils.GenerateToken(fmt.Sprint(user.ID), time.Hour, "ACCESS_TOKEN_PRIVATE_KEY")
+	accessTokenDetails, err := utils.GenerateToken(fmt.Sprint(user.ID), time.Hour, os.Getenv("ACCESS_TOKEN_PRIVATE_KEY"))
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
 
-	// TODO: save the refresh token to Redis
+	// save the refresh and access tokens to Redis
+	err = initializers.Redis.Set(context.TODO(), refreshTokenDetails.TokenUuid, fmt.Sprint(user.ID), time.Hour*24*365).Err()
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+	
+	err = initializers.Redis.Set(context.TODO(), accessTokenDetails.TokenUuid, fmt.Sprint(user.ID), time.Hour).Err()
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
 
 
 	// save the access token in the cookie
@@ -114,7 +127,132 @@ func Login(c *gin.Context) {
 				os.Getenv("DOMAIN"),
 				false,
 				true)
+	
+	c.SetCookie("logged_in",
+				"true",
+				3600,
+				"/",
+				os.Getenv("DOMAIN"),
+				false,
+				true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "User logged in successfully",
 								"access_token": accessTokenDetails.Token,})
+}
+
+func RefreshAccessToken(c *gin.Context) {
+	// retrieve the refresh token from the cookie
+	refresh_token, err := c.Cookie("refresh_token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token not found"})
+		return
+	}
+	
+	// verify the refresh token
+	tokenClaims, err := utils.VerifyToken(refresh_token, os.Getenv("REFRESH_TOKEN_PUBLIC_KEY"))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
+		return
+	}
+
+	// check if the refresh token is present in the Redis database
+	userID, err := initializers.Redis.Get(context.TODO(), tokenClaims.TokenUuid).Result()
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "token expired"})
+		return
+	}
+
+	// check if the user still exists in the database
+	var user models.User
+	err = initializers.DB.Where("id = ?", userID).First(&user).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "the user no longer exists"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	// create a new access token
+	accessTokenDetails, err := utils.GenerateToken(fmt.Sprint(user.ID), time.Hour, os.Getenv("ACCESS_TOKEN_PRIVATE_KEY"))
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+	
+	// save the access token in redis
+	err = initializers.Redis.Set(context.TODO(), accessTokenDetails.TokenUuid, fmt.Sprint(user.ID), time.Hour).Err()
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+
+	// set the access token in the cookie
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("access_token",
+				*accessTokenDetails.Token,
+				3600,
+				"/",
+				os.Getenv("DOMAIN"),
+				false,
+				true)
+	c.SetCookie("logged_in",
+				"true",
+				3600,
+				"/",
+				os.Getenv("DOMAIN"),
+				false,
+				true)
+
+	c.JSON(http.StatusOK, gin.H{"message": "success",
+								"access_token": accessTokenDetails.Token,})
+}
+
+func Logout(c *gin.Context) {
+	// retrieve the refresh token from the cookie
+	refresh_token, err := c.Cookie("refresh_token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token not found"})
+		return
+	}
+	
+	// verify the refresh token
+	tokenClaims, err := utils.VerifyToken(refresh_token, os.Getenv("REFRESH_TOKEN_PUBLIC_KEY"))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
+		return
+	}
+
+	accessTokenUuid, _ := c.MustGet("access_token_uuid").(string)
+	
+	// delete the access token and refresh token from the Redis database
+	err = initializers.Redis.Del(context.TODO(), accessTokenUuid, tokenClaims.TokenUuid).Err()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("access_token",
+				"",
+				-1,
+				"/",
+				os.Getenv("DOMAIN"),
+				false,
+				true)
+	c.SetCookie("refresh_token",
+				"",
+				-1,
+				"/",
+				os.Getenv("DOMAIN"),
+				false,
+				true)
+	c.SetCookie("logged_in",
+				"",
+				-1,
+				"/",
+				os.Getenv("DOMAIN"),
+				false,
+				true)
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }

@@ -15,7 +15,7 @@
 // [START cloud_sql_mysql_databasesql_connect_tcp]
 // [START cloud_sql_mysql_databasesql_connect_tcp_sslcerts]
 // [START cloud_sql_mysql_databasesql_sslcerts]
-package initializers
+package utils
 
 import (
 	"crypto/tls"
@@ -33,7 +33,7 @@ import (
 
 // connectTCPSocket initializes a TCP connection pool for a Cloud SQL
 // instance of MySQL.
-func connectTCPSocket() (*sql.DB, error) {
+func ConnectTCPSocket() (*sql.DB, error) {
 	mustGetenv := func(k string) string {
 		v := os.Getenv(k)
 		if v == "" {
