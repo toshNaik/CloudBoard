@@ -54,7 +54,6 @@ func SignUp(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User created successfully"})
 }
 
-
 func Login(c *gin.Context) {
 	// get the email and password from the request body
 	var body struct {
@@ -123,7 +122,7 @@ func Login(c *gin.Context) {
 	c.SetCookie("refresh_token",
 				*refreshTokenDetails.Token,
 				3600*24*365,
-				"/",
+				"/refresh",
 				os.Getenv("DOMAIN"),
 				false,
 				true)
