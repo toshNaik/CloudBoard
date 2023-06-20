@@ -1,23 +1,18 @@
 package initializers
 
 import (
-	"gorm.io/driver/mysql"
+	"os"
+
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"github.com/toshnaik/CloudBoard/utils"
 )
 
 var DB *gorm.DB
 
 func ConnectToDB() {
-	sqlDB, err := utils.ConnectTCPSocket()
-	if err != nil {
-		panic("Failed to connect database: " + err.Error())
-	}
-
-	DB, err = gorm.Open(mysql.New(mysql.Config{
-		Conn: sqlDB,
-	}), &gorm.Config{})
-
+	var err error
+	dsn := os.Getenv("DB_DSN")
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic("Failed to connect database: " + err.Error())
 	}
