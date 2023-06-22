@@ -1,4 +1,0 @@
-runtime: go120
-
-vpc_access_connector:
-  name: projects/cloudboard-389721/locations/us-central1/connectors/cloudboard-vpc-connect
