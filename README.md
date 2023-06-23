@@ -13,13 +13,25 @@ My main motivation to pursue this project was to learn **Go**, implement my own 
 I initially started coding the client side application in C++ but later switched to Go because of its available cross-platform library for clipboard access and ease of use.
 
 ### Installation
-1. Create an .env file (Check sample.env for reference)
-2. If running locally, uncomment line 14 in main.go
-3. Create a database on [Elephant SQL](https://www.elephantsql.com/) and a redis database on [Redis Labs](https://app.redislabs.com/)
-4. Create a Google Cloud Platform project and enable Secret Manager API and Cloud Run API.
+1. Create a database on [Elephant SQL](https://www.elephantsql.com/) and a redis database on [Redis Labs](https://app.redislabs.com/)
+2. Create a .env file (Check sample.env for reference)
+3. To run locally pull docker image and run the container
+    ```
+    docker pull ashutosh67/cloudboard-app
+    ```
+    ```
+    docker run -p 8080:8080 --env-file=.env ashutosh67/cloudboard-app
+    ```
+4. To run on a server create a Google Cloud Platform project and enable Secret Manager API and Cloud Run API.
 5. Run deploy-secrets.bash to deploy secrets to Secret Manager
 6. Run deploy-run.bash to deploy the application to Cloud Run
-
+7. Compile the client application and run it on your device
+    ```
+    cd client && go build -o client
+    ```
+    ```
+    ./client
+    ```
 
 ### Resources
 - https://codevoweb.com/how-to-properly-use-jwt-for-authentication-in-golang/
