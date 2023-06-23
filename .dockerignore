@@ -1,0 +1,6 @@
+.env
+.gitignore
+.gcloudignore
+client
+README.md
+*.bash

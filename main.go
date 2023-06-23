@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	initializers.LoadEnvVariables()
+	// initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
 	initializers.ConnectToRedis()
 	initializers.SyncDatabase()
@@ -22,13 +22,13 @@ func main() {
 
 	r.POST("/signup", controllers.SignUp)
 	r.POST("/login", controllers.Login)
-	
+
 	r.POST("/logout", middleware.RequireAuth, controllers.Logout)
 	r.POST("/refresh", middleware.RequireAuth, controllers.RefreshAccessToken)
 	r.GET("/cloudboard/ws", middleware.RequireAuth, controllers.WSCloudBoard)
 	// r.POST("/cloudboard/put", middleware.RequireAuth, controllers.WriteCloudboard)
 	// r.GET("/cloudboard/get", middleware.RequireAuth, controllers.ReadCloudboard)
-	
+
 	// testing routes
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "website working"})
