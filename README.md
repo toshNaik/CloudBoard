@@ -12,6 +12,15 @@ My main motivation to pursue this project was to learn **Go**, implement my own 
 
 I initially started coding the client side application in C++ but later switched to Go because of its available cross-platform library for clipboard access and ease of use.
 
+### Installation
+1. Create an .env file (Check sample.env for reference)
+2. If running locally, uncomment line 14 in main.go
+3. Create a database on [Elephant SQL](https://www.elephantsql.com/) and a redis database on [Redis Labs](https://app.redislabs.com/)
+4. Create a Google Cloud Platform project and enable Secret Manager API and Cloud Run API.
+5. Run deploy-secrets.bash to deploy secrets to Secret Manager
+6. Run deploy-run.bash to deploy the application to Cloud Run
+
+
 ### Resources
 - https://codevoweb.com/how-to-properly-use-jwt-for-authentication-in-golang/
 - https://www.youtube.com/watch?v=ma7rUS_vW9M
