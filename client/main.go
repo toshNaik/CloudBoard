@@ -34,6 +34,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	signUp(email, string(password))
 	cookies = login(email, string(password))
 }
 
@@ -58,7 +59,10 @@ func signUp(email string, password string) {
 	}
 	defer req.Body.Close()
 
-	if req.StatusCode != http.StatusOK {
+	if req.StatusCode == http.StatusConflict {
+		// user already exists return and call login
+		return
+	} else if req.StatusCode != http.StatusOK {
 		fmt.Println("Error:", req.Body)
 		panic("Error signing up")
 	}
