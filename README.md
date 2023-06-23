@@ -25,7 +25,7 @@ I initially started coding the client side application in C++ but later switched
 4. To run on a server create a Google Cloud Platform project and enable Secret Manager API and Cloud Run API.
 5. Run deploy-secrets.bash to deploy secrets to Secret Manager
 6. Run deploy-run.bash to deploy the application to Cloud Run
-7. Compile the client application and run it on your device
+7. Compile the client application and run it on your device (remember to change the server address in the client code)
     ```
     cd client && go build -o client
     ```
